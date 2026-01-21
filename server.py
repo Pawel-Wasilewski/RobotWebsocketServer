@@ -2,17 +2,30 @@ import asyncio
 import json
 import logging
 from websockets import serve, WebSocketServerProtocol, ConnectionClosedOK
-
 from config import Config
 from servo import TrashcanLidController, MovementController
 
-# SERVO CONTROLLERS INITIALIZATION (tak jak poprzednio)
-lid_plastic = TrashcanLidController(1, None, None)
-lid_paper = TrashcanLidController(2, None, None)
-lid_glass = TrashcanLidController(3, None, None)
+config = Config()
+# LID INITIALIZATION
+lid_plastic = TrashcanLidController(
+    1,
+    config.TRASHCAN_LID_1_PWM,
+    config.TRASHCAN_LID_5V_1,
+    config.TRASHCAN_LID_1_GND
+)
+lid_paper = TrashcanLidController(
+    2,
+    config.TRASHCAN_LID_2_PWM,
+    config.TRASHCAN_LID_5V_2,
+    config.TRASHCAN_LID_2_GND)
+lid_glass = TrashcanLidController(
+    3,
+    config.TRASHCAN_LID_3_PWM,
+    config.TRASHCAN_LID_5V_3,
+    config.TRASHCAN_LID_3_GND
+)
 
 lids = [lid_plastic, lid_paper, lid_glass]
-config = Config()
 movement = MovementController()
 
 # reduce noisy handshake tracebacks from websockets library
@@ -25,7 +38,6 @@ async def handler(websocket: WebSocketServerProtocol):
 
     try:
         async for message in websocket:
-            # websockets zwraca `str` dla tekstu i `bytes` dla binarnych
             if isinstance(message, (bytes, bytearray)):
                 await websocket.send(json.dumps({
                     "error": "Unsupported message type. Only text messages are accepted."
@@ -49,32 +61,25 @@ async def handler(websocket: WebSocketServerProtocol):
                         match direction:
                             case "LEFT":
                                 movement.turn_left()
-                                await websocket.send(json.dumps({}))  # TODO: feedback
                             case "RIGHT":
                                 movement.turn_right()
-                                await websocket.send(json.dumps({}))
                             case "FORWARD":
                                 movement.move_forward()
-                                await websocket.send(json.dumps({}))
                             case "BACKWARD":
                                 movement.move_backward()
-                                await websocket.send(json.dumps({}))
                             case "STOP":
                                 movement.stop()
-                                await websocket.send(json.dumps({}))
                             case _:
                                 await websocket.send(json.dumps({"error": "Unknown move direction."}))
 
                     case "OPEN_TRASHCAN" | "CLOSE_TRASHCAN":
-                        trashlid = data.get("lid")
-                        # elastyczna walidacja: jeśli NUMBER_OF_TRASHCANS to int -> zakres,
-                        # w przeciwnym razie traktujemy to jako kolekcja
+                        trashLid = data.get("lid")
                         valid = False
                         if isinstance(getattr(config, "NUMBER_OF_TRASHCANS", None), int):
-                            valid = isinstance(trashlid, int) and 0 <= trashlid < config.NUMBER_OF_TRASHCANS
+                            valid = isinstance(trashLid, int) and 0 <= trashLid < config.NUMBER_OF_TRASHCANS
                         else:
                             try:
-                                valid = trashlid in config.NUMBER_OF_TRASHCANS
+                                valid = trashLid in config.NUMBER_OF_TRASHCANS
                             except Exception:
                                 valid = False
 

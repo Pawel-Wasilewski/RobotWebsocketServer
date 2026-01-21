@@ -1,4 +1,20 @@
 class Config:
-    PINOUT = {
-        # TODO Pinout
-    }
+    # ANOTHER DATA
+    NUM_TRASHCANS = 3
+
+    # GPIO pin configuration constants.
+    PWM_ENGINE_LEFT = 33
+    PWM_ENGINE_RIGHT = 32
+    DIR_ENGINE_LEFT = 22
+    DIR_ENGINE_RIGHT = 15
+    GND_ENGINE = 14
+
+    TRASHCAN_LID_1_PWM = 11
+    TRASHCAN_LID_2_PWM = 16
+    TRASHCAN_LID_3_PWM = 18
+    TRASHCAN_LID_1_GND = 9
+    TRASHCAN_LID_2_GND = 20
+    TRASHCAN_LID_3_GND = 20
+    TRASHCAN_LID_5V_1 = 4
+    TRASHCAN_LID_5V_2 = 2
+    TRASHCAN_LID_5V_3 = 2
