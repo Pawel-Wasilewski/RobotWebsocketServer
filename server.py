@@ -6,12 +6,12 @@ from config import Config
 from servo import TrashcanLidController, MovementController
 
 # SERVO CONTROLLERS INITIALIZATION
-lid_plastic = TrashcanLidController(1, null, null)  # TODO: Replace null with actual servo motor instances)
-lid_paper = TrashcanLidController(2, null, null)   # TODO: Replace null with actual servo motor instances)
-lid_glass = TrashcanLidController(3, null, null)   # TODO: Replace null with actual servo motor instances)
+lid_plastic = TrashcanLidController(1, None, None)  # TODO: Replace None with actual servo motor instances)
+lid_paper = TrashcanLidController(2, None, None)   # TODO: Replace None with actual servo motor instances)
+lid_glass = TrashcanLidController(3, None, None)   # TODO: Replace None with actual servo motor instances)
 
 lids = [lid_plastic, lid_paper, lid_glass]
-
+config = Config()
 movement = MovementController()  # TODO: Initialize with actual servo motor instances
 
 def websocketGateway(ws):
@@ -19,9 +19,9 @@ def websocketGateway(ws):
     ws.send("WebSocket connection established.", OpCode.TEXT)
 
 def ws_message(ws, message, opcode):
-    config = Config()
+
     if opcode != OpCode.TEXT:
-        ws.send(json.dump({
+        ws.send(json.dumps({
             "error": "Unsupported message type. Only text messages are accepted."
         }), OpCode.TEXT)
         return
@@ -100,8 +100,8 @@ def serveServer(app):
     app.any("/", lambda res,req: res.end("Invalid. Please use WebSocket protocol."))
 
 if __name__ == "__main__":
-    # SOCKETIFY SERVER SETUP
     app = App()
     serveServer(app)
-    app.listen(3000, lambda: print("Server is running on http://localhost:3000"))
+    app.listen(3000, "0.0.0.0")
+    print("Server running on 0.0.0.0:3000")
     app.run()
