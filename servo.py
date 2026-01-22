@@ -50,39 +50,50 @@ class MovementController:
 
         self.pi = pigpio.pi()
 
-        self.pi.set_mode(DIR_LEFT, pigpio.OUTPUT)
-        self.pi.set_mode(DIR_RIGHT, pigpio.OUTPUT)
+        if not self.pi.connected:
+            raise RuntimeError("pigpio nie działa – uruchom sudo pigpiod")
 
-        FREQ = 20000
+        for pin in [DIR_LEFT, DIR_RIGHT]:
+            self.pi.set_mode(pin, pigpio.OUTPUT)
 
-        self.pi.set_PWM_frequency(PWM_LEFT, FREQ)
-        self.pi.set_PWM_frequency(PWM_RIGHT, FREQ)
+        for pin in [PWM_LEFT, PWM_RIGHT]:
+            self.pi.set_mode(pin, pigpio.OUTPUT)
+            self.pi.set_PWM_frequency(pin, 20000)
+            self.pi.set_PWM_range(pin, 255)
 
-    def turn_left_wheels(self):
-        # TODO LOGIC
-        print("Turning left wheels")
-    def turn_right_wheels(self):
-        # TODO LOGIC
-        print("Turning right wheels")
+        self.stop()
 
-    def move_forward(self):
-        print("Moving forward")
+    def _drive(self, pwm_pin, dir_pin, speed):
+        speed = int(max(min(speed, 255), -255))
 
-    def move_backward(self):
-        print("Moving backward")
+        if speed >= 0:
+            self.pi.write(dir_pin, 0)
+            self.pi.set_PWM_dutycycle(pwm_pin, speed)
+        else:
+            self.pi.write(dir_pin, 1)
+            self.pi.set_PWM_dutycycle(pwm_pin, -speed)
 
-    def turn_left(self):
-        print("Turning left")
+    def move_forward(self, speed=180):
+        print(f"Przód {speed}")
+        self._drive(self.PWM_LEFT, self.DIR_LEFT, speed)
+        self._drive(self.PWM_RIGHT, self.DIR_RIGHT, speed)
 
-    def turn_right(self):
-        print("Turning right")
+    def move_backward(self, speed=180):
+        print(f"Tył {speed}")
+        self._drive(self.PWM_LEFT, self.DIR_LEFT, -speed)
+        self._drive(self.PWM_RIGHT, self.DIR_RIGHT, -speed)
 
     def stop(self):
-        print("Stopping movement")
+        print("Stop")
+        self.pi.set_PWM_dutycycle(self.PWM_LEFT, 0)
+        self.pi.set_PWM_dutycycle(self.PWM_RIGHT, 0)
 
-class ServoMotor:
-    def __init__(self, pin):
-        self.pin = pin
+    def turn_left(self, speed=160):
+        print(f"Skręt w lewo {speed}")
+        self._drive(self.PWM_LEFT, self.DIR_LEFT, speed // 2)
+        self._drive(self.PWM_RIGHT, self.DIR_RIGHT, speed)
 
-    def set_angle(self, angle):
-        print(f"Setting servo on pin {self.pin} to angle {angle}")
+    def turn_right(self, speed=160):
+        print(f"Skręt w prawo {speed}")
+        self._drive(self.PWM_LEFT, self.DIR_LEFT, speed)
+        self._drive(self.PWM_RIGHT, self.DIR_RIGHT, speed // 2)

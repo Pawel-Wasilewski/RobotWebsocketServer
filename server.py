@@ -26,7 +26,13 @@ lid_glass = TrashcanLidController(
 )
 
 lids = [lid_plastic, lid_paper, lid_glass]
-movement = MovementController()
+movement = MovementController(
+    config.DIR_ENGINE_LEFT,
+    config.DIR_ENGINE_RIGHT,
+    config.PWM_ENGINE_LEFT,
+    config.PWM_ENGINE_RIGHT,
+    config.GND_ENGINE
+)
 
 # reduce noisy handshake tracebacks from websockets library
 logging.getLogger("websockets.server").setLevel(logging.WARNING)
@@ -84,7 +90,22 @@ async def handler(websocket: WebSocketServerProtocol):
                                 valid = False
 
                         if valid:
-                            # TODO: implement open/close logic using lids list
+                            match trashLid:
+                                case 1:
+                                    if event == "OPEN_TRASHCAN":
+                                        await lid_plastic.open_lid()
+                                    else:
+                                        await lid_plastic.close_lid()
+                                case 2:
+                                    if event == "OPEN_TRASHCAN":
+                                        await lid_paper.open_lid()
+                                    else:
+                                        await lid_paper.close_lid()
+                                case 3:
+                                    if event == "OPEN_TRASHCAN":
+                                        await lid_glass.open_lid()
+                                    else:
+                                        await lid_glass.close_lid()
                             await websocket.send(json.dumps({}))
                         else:
                             await websocket.send(json.dumps({
